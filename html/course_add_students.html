@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css" />
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+	</head>
+	<body>
+		<div class="x-body" style="">
+			<form class="layui-form" id="course_form" action="">
+				<fieldset class="layui-elem-field layui-field-title">
+					<legend>管理学生</legend>
+				</fieldset>
+				<div class="layui-form-item">
+					<label class="layui-form-label">上课学生</label>
+					<div id="" class="layui-input-inline">
+						<input type="text" name="" placeholder="请输入" autocomplete="off" class="layui-input" id="student_select_div">
+						<!-- <input type="hidden" name="courseStudent" id="student_hidden" value="" lay-verify="required" /></div> -->
+					<div class="layui-form-mid layui-word-aux"></div>
+				</div>
+				<div class="layui-form-item">
+					<div class="layui-input-block">
+						<!-- <button class="layui-btn" lay-submit="" lay-filter="course_add_students">立即提交</button> -->
+						<input type="button" class="layui-btn" id="course_add_students" value="立即提交" />
+					</div>
+				</div>
+			</form>
+		</div>
+	</body>
+	<script>
+		layui.config({
+			base: '../layui_exts/',
+		}).extend({
+			excel: 'tableSelect',
+		});
+		
+		layui.use(['table', 'layer', 'form', 'tableSelect'], function() {
+			
+			var table = layui.table,
+				form = layui.form,
+				$ = layui.jquery,
+				tableSelect = layui.tableSelect
+				layer = layui.layer;
+			
+			var courseId = getPar('courseId');
+			console.log(courseId)
+			
+			var student_data = [];
+			
+			var student_choosed_data = [];
+			
+			//初始化学生选择下拉框
+			tableSelect.render({
+				elem: '#student_select_div',
+				searchKey: 'studentName',
+				checkedKey: 'studentId',
+				searchPlaceholder: '自定义文字和name',
+				table: {
+					url: BASE_URL + "student/1/0",
+					loading: true,
+					page: false,
+					headers: {
+						"x-access-token": TOKEN
+					},
+					response: {
+						statusName: 'code' //规定数据状态的字段名称，默认：code
+							,
+						statusCode: 1 //规定成功的状态码，默认：0
+							,
+						msgName: 'msg' //规定状态信息的字段名称，默认：msg
+							,
+						countName: 'total' //规定数据总数的字段名称，默认：count
+							,
+						dataName: 'data' //规定数据列表的字段名称，默认：data
+					},
+					cols: [[
+						{ type: 'checkbox' },
+						{field: 'studentId',title: '学号',minWidth: 100,sort: true},
+						{field: 'studentName',title: '姓名',minWidth: 100,sort: true}
+					]]
+				},
+				done: function(elem, data){
+					console.log(data.data);
+					var student_choose_list = data.data
+					var length = student_choose_list.length
+					var students_list = [];
+					var student_str = '';
+					
+					for(var i=0; i<length; i++){
+						var student = { courseId: courseId, studentId: student_choose_list[i].studentId };
+						students_list.push(student);
+						student_str = student_str + student_choose_list[i].studentName + ','
+					}
+					student_str = student_str.substring(0, student_str.length-1)
+					student_data = students_list;
+					$('#student_select_div').val(student_str)
+				}
+			});
+			
+			//表单提交监听
+			$('#course_add_students').on('click', function(){
+				
+				add_students(student_data);
+				
+			});
+			
+			//添加学生
+			function add_students(student_data){
+				var students_data = JSON.stringify(student_data)
+				console.log(students_data);
+				var course_add_students_info = {
+					api: "course/batch/add/students",
+					type: "POST",
+					data: students_data
+				}
+				
+				function course_add_students_func(e){
+					if(e.success){
+						console.log(e)
+						layer.msg('操作成功', {icon: 1});
+					}else{
+						console.log(e)
+						layer.msg(e.msg, {icon: 2});
+					}
+				}
+				
+				request_(course_add_students_info, course_add_students_func);
+			}
+			
+			init_choose_student()
+			
+			//初始化已选择的学生
+			function init_choose_student(){
+				var get_students_info = {
+					api: "course/student/" + courseId + "/1/0",
+					type: "GET",
+					data: []
+				}
+				
+				function get_students_func(e){
+					if(e.success){
+						// layer.msg('操作成功', {icon: 1});
+						console.log(e.data)
+						var stu_data = e.data;
+						var length = stu_data.length;
+						var stu_id_str = '';
+						var stu_name_str = '';
+						
+						for(var i=0; i<length; i++){
+							stu_id_str = stu_id_str + stu_data[i].studentId + ',';
+							stu_name_str = stu_name_str + stu_data[i].studentName + ',';
+						}
+// 						var arr = stu_str.split(',')
+// 						student_choosed_data = arr
+						stu_id_str = stu_id_str.substring(0, stu_id_str.length-1)
+						stu_name_str = stu_name_str.substring(0, stu_name_str.length-1)
+						console.log(stu_id_str)
+						console.log(stu_name_str)
+						
+						$('#student_select_div').val(stu_name_str)
+						$('#student_select_div').attr('ts-selected', stu_id_str)
+					}else{
+						console.log(e)
+						layer.msg(e.msg, {icon: 2});
+					}
+				}
+				
+				request_(get_students_info, get_students_func);
+			}
+			
+		})
+	</script>
+</html>

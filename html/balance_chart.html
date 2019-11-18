@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css" />
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script src="../js/cos-js-sdk-v5.min.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+	</head>
+	<body>
+		
+		<div class="x-nav">
+			<span class="layui-breadcrumb">
+				<a href="">首页</a>
+				<a href="">余额信息管理</a>
+				<a href=""><cite>学员余消费历史</cite></a>
+			</span>
+			<a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);"
+			 title="刷新">
+				<i class="layui-icon" style="line-height:30px">ဂ</i></a>
+		</div>
+		<div class="x-body">
+			<form class="layui-form" action="">
+				<div class="layui-form-item">
+					<div class="layui-inline">
+						<label class="layui-form-label">日期范围</label>
+						<div class="layui-input-inline">
+							<input type="text" name="search_key" id="search_key" placeholder="" autocomplete="off" class="layui-input">
+						</div>
+						<div class="layui-input-inline" style="width: 60px;">
+							<button class="layui-btn" lay-submit="" id="sreach" lay-filter="sreach" title='搜索'><i class="layui-icon layui-icon-search"></i></button>
+						</div>
+						<div class="layui-input-inline" style="width: 60px;">
+							<button class="layui-btn" lay-submit="" id="reset" lay-filter="reset" title='重置'><i class="layui-icon layui-icon-refresh"></i></button>
+						</div>
+					</div>
+				</div>
+			</form>
+			<table id="records_table" lay-filter="records_table" lay-skin="line"></table>
+			<div id="laypage_"></div>
+		</div>
+		
+		
+		
+		<script type="text/html" id="toolbarDemo">
+			<div class="layui-btn-container">
+				<!-- <button class="layui-btn layui-btn-danger layui-btn-sm" lay-event="delete">删除</button> -->
+				<!-- <button class="layui-btn layui-btn-sm" lay-event="check">查看</button> -->
+				<button class="layui-btn layui-btn-sm" lay-event="export_all">导出全部数据</button>
+			</div>
+		</script>
+		
+		<script>
+			
+			layui.config({
+				base: '../layui_exts/',
+			}).extend({
+				excel: 'excel',
+				tableMerge: 'tableMerge'
+			});
+			layui.use(['table', 'laypage', 'tableMerge', 'excel', 'laydate'], function(){
+				var table = layui.table,
+					laypage = layui.laypage,
+					tableMerge = layui.tableMerge,
+					excel = layui.excel,
+					laydate = layui.laydate,
+					form = layui.form,
+					$ = layui.jquery;
+					
+				var studentId = getPar('studentId');
+				console.log(studentId)
+				
+				//初始化日期范围
+				laydate.render({
+					elem: '#search_key',
+					range: true
+				});
+				
+				//搜索监听
+				form.on('submit(sreach)', function(data) {
+					
+					console.log(data)
+					var search_key = data.field.search_key
+					
+					var startTime = search_key.split(' - ')[0]
+					var endTime = search_key.split(' - ')[1]
+					
+					get_student_records(startTime, endTime)
+					
+					return false;
+				})
+				
+				//重置监听
+				form.on('submit(reset)', function(data) {
+					
+					console.log(data)
+					
+					// $('.laydate-btns-clear').click()
+					get_student_records()
+					
+					return false;
+				})				
+				
+				get_student_records()
+				
+				//初始获取数据
+				function get_student_records(){
+					
+					var get_student_records_info = {
+						api: 'student/pay/1/10/' + studentId,
+						type: "GET",
+						data: []
+					}
+					
+					function get_student_records_func(e){
+						if(e.success){
+							init_page(e.total)
+							init_table(e.data)
+						}else{
+							console.log(e);
+							layer.msg(e.msg, {icon: 2});
+						}
+						
+					}
+					
+					request_(get_student_records_info, get_student_records_func)
+					
+				}
+				
+				//初始按时间检索的数据
+				function get_student_records(strStartTime, strEndTime){
+					
+					var get_student_records_info = {
+						api: 'student/pay/1/10/' + studentId + '/?strStartTime=' + strStartTime + '&strEndTime=' + strEndTime,
+						type: "GET",
+						data: []
+					}
+					
+					function get_student_records_func(e){
+						
+						if(e.success){
+							init_page(e.total)
+							init_table(e.data)
+						}else{
+							console.log(e);
+							layer.msg(e.msg, {icon: 2});
+						}
+						
+					}
+					
+					request_(get_student_records_info, get_student_records_func)
+					
+				}
+				
+				//初始化分页条
+				function init_page(total){
+					
+					console.log(total)
+					laypage.render({
+						elem: 'laypage_',
+						count: total,
+						layout: ['count', 'prev', 'page', 'next', 'limit', 'refresh', 'skip'],
+						jump: function(obj, first) {
+							console.log(obj)
+							console.log(first)
+							if (first) {
+							// load_table();
+							} else {
+								get_student_records_page(obj.curr, obj.limit)
+							}
+						}
+					});
+					
+				}
+				
+				//初始化表格
+				function init_table(data){
+					console.log(data)
+					table.render({
+						elem: '#records_table',
+						data: data,
+						page: false,
+						toolbar: true,
+						toolbar: '#toolbarDemo',
+						limit: Number.MAX_VALUE,//不限条数,默认10
+						cols: [
+							[
+								{title: 'ID', field: 'logId', sort: true, width: 60, fixed: 'left'},
+								{title: '消费时间', field: 'createTime', sort: true},
+								{title: '备注', field: 'remark', minWidth: 200},
+								{title: '变动类型', field: 'type', merge: true, sort: true, width: 120, align: 'right', templet: function(e){
+									var str = ''
+									if(e.type == 0){
+										var number = parseFloat(e.sum).toFixed(2); 
+										str = number > 0 ? '余额充值' : '上课扣除'
+									}else{
+										str = '赠款'
+									}
+									return  str;
+								}},
+								{title: '变动数额', field: 'sum', sort: true, width: 120, align: 'right', templet: function(e){
+									var number = parseFloat(e.sum).toFixed(2); 
+									return number > 0 ? '+'+number: number;
+								}},
+								// {title: '操作', toolbar: '#barDemo', width: 242}
+							]
+						],
+						done: function(){
+							tableMerge.render(this)
+						}
+					});
+				}
+				
+				//按页码显示数据
+				function get_student_records_page(curr, limit){
+					
+					var get_student_records_page_info = {
+						api: 'student/pay/' + curr + '/' + limit + '/' + studentId,
+						type: "GET",
+						data: []
+					}
+					
+					function get_student_records_page_func(e){
+						
+						if(e.success){
+							// init_page(e.total)
+							init_table(e.data)
+						}else{
+							console.log(e);
+							layer.msg(e.msg, {icon: 2});
+						}
+						
+					}
+					
+					request_(get_student_records_page_info, get_student_records_page_func)
+					
+				}
+			
+				//表头工具栏监听事件
+				table.on('toolbar(records_table)', function(obj) {
+					var checkStatus = table.checkStatus(obj.config.id);
+					switch (obj.event) {
+						case 'export_all':
+							//导出监听
+							
+							//发送请求获取全部数据
+							var export_info = {
+								api: 'student/pay/1/0/' + studentId,
+								type: "GET",
+								data: []
+							}
+							
+							function export_func(e){
+								console.log(e.data);
+								//数据添加表头
+								e.data.unshift({
+									studentId: '学号',
+									createTime: '时间',
+									remark: '备注',
+									type: '变动类型',
+									sum: '变动数额'
+								});
+								//数据格式
+								var export_data = excel.filterExportData(e.data, {
+									studentId: 'studentId',
+									createTime: 'createTime',
+									remark: 'remark',
+									type: function(value, line, data){
+										if(value == '变动类型'){return value}
+										var str = ''
+										if(value == 0){
+											var number = parseFloat(line.sum).toFixed(2); 
+											str = number > 0 ? '余额充值' : '上课扣除'
+										}else{
+											str = '赠款'
+										}
+										return  str;
+									},
+									sum: function(value, line, data){
+										if(value == '变动数额'){return value}
+										var number = parseFloat(line.sum).toFixed(2); 
+										return number > 0 ? '+'+number: number;
+									}
+								});
+								//设置列宽
+								var colConf = excel.makeColConfig({
+									'B': 125,
+									'C': 180,
+									'D':100,
+									'E': 100
+								}, 80);
+								
+								//导出
+								excel.exportExcel({sheet1: export_data}, '学生消费历史表.xlsx', 'xlsx',{extend: {'!cols': colConf}});
+							
+								layer.msg("已下载" ,{icon: 1});
+							}
+							
+							request_(export_info, export_func);
+							break;
+// 						case 'LAYTABLE_COLS':
+// 							layer.msg('a');
+// 							break;
+// 						case 'LAYTABLE_EXPORT':
+// 							layer.msg('b');
+// 							break;
+// 						case 'LAYTABLE_PRINT':
+// 							layer.msg('c');
+// 							break;
+					};
+				});
+			
+				
+			
+			})
+			
+		</script>
+		
+		
+		<script>
+			if(TOKEN == ''){
+				location.href='login.html'
+			}
+		</script>
+		
+	</body>
+</html>

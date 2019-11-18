@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css" />
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+	</head>
+	<body>
+		<div class="x-nav">
+			<span class="layui-breadcrumb">
+				<a href="">首页</a>
+				<a href="">课程信息管理</a>
+				<a href="">课程管理</a>
+				<a href=""><cite>添加课程</cite></a>
+			</span>
+			<a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);"
+			 title="刷新">
+				<i class="layui-icon" style="line-height:30px">ဂ</i></a>
+		</div>
+		<div class="x-body" style="">
+			<form class="layui-form" id="course_form" action="">
+				<fieldset class="layui-elem-field layui-field-title">
+					<legend>课程信息</legend>
+				</fieldset>
+				<div class="layui-form-item">
+					<label class="layui-form-label">上课时间</label>
+					<div id="time_select_div" class="layui-input-inline layui-unselect layui-form-select">
+						<div class="layui-select-title">
+							<input type="text" id="time_select" placeholder="请选择时间" value="" readonly="" class="layui-input layui-unselect">
+							<input type="hidden" name="timeCode" id="time_hidden" value="" lay-verify="required" />
+							<input type="hidden" name="week" id="week_hidden" value="" />
+							<i class="layui-edge"></i>
+						</div>
+						<dl class="layui-anim layui-anim-upbit" style="width: 576px;">
+							<table id="table_section" class="layui-table choose_time_table" style="margin: 0px;" lay-filter="week_event"></table>
+						</dl>
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">上课地点</label>
+					<div class="layui-input-inline">
+						<select id="coursePlace" name="coursePlace" lay-verify="required">
+						</select>
+					</div>
+					<div class="layui-form-mid layui-word-aux"></div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">授课教师</label>
+					<div id="" class="layui-input-inline">
+						<!-- <select name="courseTeacher" lay-verify="">
+							<option value="1">正式学员</option>
+							<option value="0">试课学员</option>
+						</select> -->
+						<input type="text" name="" placeholder="请输入" autocomplete="off" class="layui-input" id="teacher_select_div">
+						<input type="hidden" name="courseTeacher" id="teacherId_hidden" value="" lay-verify="required" /></div>
+					<div class="layui-form-mid layui-word-aux"></div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">班级种类</label>
+					<div class="layui-input-inline">
+						<select id="courseKindId" name="courseKindId" lay-verify="required">
+						</select>
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">课程种类</label>
+					<div class="layui-input-inline">
+						<select id="courseType" name="courseType" lay-verify="required" lay-filter="courseType">
+							<option value="0">正课</option>
+							<option value="1">练习课</option>
+						</select>
+					</div>
+					<div class="layui-form-mid layui-word-aux"></div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">课程等级</label>
+					<div class="layui-input-inline">
+						<select id="courseLevel" name="courseLevel">
+							<option value="0">初级</option>
+							<option value="1">中级</option>
+							<option value="2">高级</option>
+						</select>
+					</div>
+					<div class="layui-form-mid layui-word-aux"></div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">课程收费</label>
+					<div class="layui-input-inline">
+						<input type="number" name="coursePay" required lay-verify="required" placeholder="请输入课程的收费"
+						 autocomplete="off" class="layui-input">
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<div class="layui-input-block">
+						<button class="layui-btn" lay-submit="" lay-filter="add_course_btn">立即提交</button>
+						<button id="reset_btn" type="reset" class="layui-btn layui-btn-primary">重置</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</body>
+	
+	<script>
+		layui.config({
+			base: '../layui_exts/',
+		}).extend({
+			excel: 'tableSelect',
+		});
+		layui.use(['table', 'layer', 'form', 'tableSelect'], function() {
+			
+			var table = layui.table,
+				form = layui.form,
+				$ = layui.jquery,
+				layer = layui.layer,
+				tableSelect = layui.tableSelect;
+				
+			select_value_init();
+			
+			//初始化所有下拉框
+			function select_value_init(){
+				
+				//获取乐器种类下拉框的值
+				var get_kind_select_info = {
+					api: "courseKind/1/0",
+					type: "GET",
+					data: []
+				}
+				
+				function get_kind_select_func(e){
+					
+					if(e.success){
+						var kind_info = e.data;
+						for(var i=0; i<kind_info.length; i++){
+							$('#courseKindId').append(new Option(kind_info[i].kindName, kind_info[i].kindId));//往下拉菜单里添加元素
+						}
+						form.render();//表单渲染 把内容加载进去
+					}else{
+						console.log(e);
+						layer.msg(e.msg, {icon: 2});
+					}
+					
+				}
+				
+				request_(get_kind_select_info, get_kind_select_func);
+				
+				
+				//获取地点下拉框的值
+				var get_place_select_info = {
+					api: "place/1/0",
+					type: "GET",
+					data: []
+				}
+				
+				function get_place_select_func(e){
+					
+					if(e.success){
+						var place_info = e.data;
+						for(var i=0; i<place_info.length; i++){
+							$('#coursePlace').append(new Option(place_info[i].placeName, place_info[i].placeId));//往下拉菜单里添加元素
+						}
+						form.render();//表单渲染 把内容加载进去
+					}else{
+						console.log(e);
+						layer.msg(e.msg, {icon: 2});
+					}
+					
+				}
+				
+				request_(get_place_select_info, get_place_select_func);
+				
+				
+				//获取时间选择下拉框的值
+				var get_time_select_info = {
+					api: "timeCode/1/0",
+					type: "GET",
+					data: []
+				}
+				
+				function get_time_select_func(e){
+					
+					if(e.success){
+						var course_data = data_deal(e.data);
+						//加载时间表格
+						time_table_init(course_data);
+					}else{
+						console.log(e);
+						layer.msg(e.msg, {icon: 2});
+					}
+					
+				}
+				
+				request_(get_time_select_info, get_time_select_func);
+				
+			}			
+			
+			//初始化时间表格
+			function time_table_init(coures_data){
+				table.render({
+					elem: '.choose_time_table',
+					data: coures_data,
+					page: false,
+					// size: 'lg',
+					limit: Number.MAX_VALUE,//不限条数,默认10
+					cols: [
+						[
+							{title: '', event: 'week0', minWidth: 145},
+							{title: '周一', event: 'week1'},
+							{title: '周二', event: 'week2'},
+							{title: '周三', event: 'week3'},
+							{title: '周四', event: 'week4'},
+							{title: '周五', event: 'week5'},
+							{title: '周六', event: 'week6'},
+							{title: '周日', event: 'week7'}
+						]
+					],
+					done: function(){
+						// console.log("ASdasd"); 
+					}
+				});
+				
+				//单元格点击监听
+				$(".layui-table-col-special").on('click', function(e){
+					var _this = $(this).find("div[data-time_code_id]");
+					//若点击时间段单元格,则return，无事件发生
+					if(_this.length == 0){
+						return ;
+					}
+					var time_code_id = _this[0].dataset.time_code_id;
+					var start_time = _this[0].dataset.start_time;
+					var end_time = _this[0].dataset.end_time;
+					var week = _this[0].dataset.week;
+					$('#time_hidden').val(time_code_id);
+					$('#week_hidden').val(week);
+					$('#time_select').val(week_num_change_str(week) + ' ' + start_time + '-' + end_time);
+				});
+				
+			}
+			
+			//时间选择下拉框
+			$('#time_select_div').on('click', function(e){
+				$(this).toggleClass('layui-form-selected');
+			});
+			
+			//初始化教师选择下拉框
+			tableSelect.render({
+				elem: '#teacher_select_div',
+				searchKey: 'teacherName',
+				checkedKey: 'teacherId',
+				searchPlaceholder: '自定义文字和name',
+				table: {
+					url: BASE_URL + "teacher/1/0",
+					loading: true,
+					page: false,
+					headers: {
+						"x-access-token": TOKEN
+					},
+					response: {
+						statusName: 'code' //规定数据状态的字段名称，默认：code
+							,
+						statusCode: 1 //规定成功的状态码，默认：0
+							,
+						msgName: 'msg' //规定状态信息的字段名称，默认：msg
+							,
+						countName: 'total' //规定数据总数的字段名称，默认：count
+							,
+						dataName: 'data' //规定数据列表的字段名称，默认：data
+					},
+					cols: [[
+						{ type: 'radio' },
+						{field: 'teacherId',title: '工号',minWidth: 100,sort: true},
+						{field: 'teacherName',title: '姓名',minWidth: 100,sort: true}
+					]]
+				},
+				done: function(elem, data){
+					console.log(data.data[0].teacherName);
+					console.log(data.data[0].teacherId);
+					$('#teacher_select_div').val(data.data[0].teacherName);
+					$('#teacherId_hidden').val(data.data[0].teacherId)
+				}
+			});
+			
+			//课程种类监听,若选择练习可则课程等级变为不可选择状态
+			form.on('select(courseType)', function(data){
+				if(data.value == '1'){
+					$('#courseLevel').attr('disabled', 'disabled');
+					$('#courseLevel').val('-1')
+					form.render();//表单重新渲染
+				}else{
+					$('#courseLevel').removeAttr('disabled');
+					form.render();
+				}
+			});
+			
+			//表单提交监听
+			form.on('submit(add_course_btn)', function(data){
+				console.log(data);
+				
+				var courese_data = {
+					timeCode: data.field.timeCode,
+					coursePlace: data.field.coursePlace,
+					courseTeacher: data.field.courseTeacher,
+					courseKindId: data.field.courseKindId,
+					courseType: data.field.courseType,
+					courseLevel: data.field.courseLevel,
+					coursePay: data.field.coursePay
+				}
+				
+// 				var timeCode = data.field.timeCode;
+// 				var coursePlace = data.field.coursePlace;
+// 				var courseTeacher = data.field.courseTeacher;
+// 				var courseKindId = data.field.courseKindId;
+// 				var courseType = data.field.courseType;
+// 				var courseLevel = data.field.courseLevel;
+// 				var coursePay = data.field.coursePay;
+				courese_data = JSON.stringify(courese_data)
+				var add_course_info = {
+					api: "course",
+					type: "POST",
+					data: courese_data
+				}
+				
+				function add_course_func(e){
+					if(e.success){
+						layer.msg('操作成功', {icon: 1});
+						$('#reset_btn').click();
+					}else{
+						console.log(e)
+						layer.msg(e.msg, {icon: 2});
+					}
+				}
+				
+				request_(add_course_info, add_course_func);
+				
+				return false;
+			});
+			
+			//返回数据格式转换表格所需数据格式
+			function data_deal(data){
+				
+				var result = data;
+				
+				var map = {};
+				var deal_data = [];
+				
+				for(var i=0; i<result.length; i++){
+					result_i = result[i];
+					if(!map[result_i.startTime] && !map[result_i.endTime]){
+						deal_data.push({
+							id: result_i.id,
+							startTime: result_i.startTime,
+							endTime: result_i.endTime,
+							data: [result_i]
+						})
+						map[result_i.startTime] = result_i;
+						// deal_data.push(result_i);
+					}else{
+						for(var j=0; j<deal_data.length; j++){
+							var course_j = deal_data[j];
+							if(course_j.startTime == result_i.startTime && course_j.endTime == result_i.endTime){
+								course_j.data.push(result_i);
+								break;
+							}
+						}
+					}
+				}
+				
+				// console.log(deal_data);
+				
+				var course_data = [];
+				
+				for(i in deal_data){
+					var section = [];
+					var time_code_section = deal_data[i].startTime + '-' + deal_data[i].endTime;
+					
+					section.push(time_code_section);
+					for(j in deal_data[i].data){
+						// console.log(deal_data[i].data[j]);
+						var talbe_section = '<div style="width:100%;height:100;" data-time_code_id="' + deal_data[i].data[j].id + '" data-start_time="' + deal_data[i].data[j].startTime + '" data-end_time="' + deal_data[i].data[j].endTime + '" data-week="' + deal_data[i].data[j].week + '" ></div>'
+						section.push(talbe_section);
+					}
+					course_data.push(section);
+				}
+				// console.log(course_data);
+				
+				return course_data;
+			}
+			
+		});
+	</script>
+	
+</html>

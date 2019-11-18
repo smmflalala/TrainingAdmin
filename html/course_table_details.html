@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css" />
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+	</head>
+	<body>
+		<div class="x-body" style="">
+			<fieldset class="layui-elem-field layui-field-title">
+				<legend></legend>
+			</fieldset>
+			<table id="course_detail_table" lay-filter='course_detail_table'>
+				
+			</table>
+		</div>
+	</body>
+	
+	<script type="text/html" id="barDemo">
+		<a class="layui-btn layui-btn-xs" lay-event="read">查看</a>
+	<!-- 	<a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="give">赠送</a>
+		<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="edit">修改</a> -->
+	</script>
+	
+	<script>
+		layui.use(['table'], function(){
+			var table = layui.table,
+				$ = layui.jquery;
+			
+			var timeCode = getPar('timeCode');
+			// var week = getPar('week');
+			var course_all_detail = [];
+			
+			get_all_detail_info();
+			
+			//获取指定week,timeCode的课程信息
+			function get_all_detail_info(){
+				console.log(timeCode);
+				var data = {timeCode: timeCode}
+				data = JSON.stringify(data)
+				var get_course_detail_info = {
+					api: 'course/search/1/0',
+					type: "POST",
+					data: data
+				}
+				
+				function get_course_detail_func(e){
+					
+					if(e.success){
+						console.log(e)
+						course_all_detail = e.data;
+						table_init();
+						
+						// var start_time = e.data[0].startTime.split(' ')[1];
+						// console.log(start_time);
+						// var end_time = e.data[0].endTime.split(' ')[1];
+						// var title = '周' + week + ' - ' + start_time + ' - ' + end_time;
+						// $('.layui-field-title legend').text(title);
+						
+					}else{
+						layer.msg(e.msg, {
+							icon: 0
+						});
+						console.log(e);
+					}
+					
+				}
+				
+				request_(get_course_detail_info, get_course_detail_func)
+			}
+			
+			//表格初始化
+			function table_init(){
+				
+				table.render({
+					elem: '#course_detail_table',
+					data: course_all_detail,
+					page: false,
+					size: 'lg',
+					limit: Number.MAX_VALUE,//不限条数,默认10
+					cols: [
+						[
+							{title: '地点', field: 'placeName', sort: true},
+							{title: '乐器类别', field: 'kindName', sort: true},
+							{title: '课程类别', field: 'courseType', sort: true, templet: function(e){return e.courseType == 0 ? '正课' : '练习课'}},
+							{title: '授课老师', field: 'teacherName'},
+							{title: '课程等级', field: 'courseLevel', sort: true},
+							{title: '课程收费', field: 'coursePay', sort: true},
+							{title: '课程状态', field: 'courseState', sort: true},
+							{title: '操作', fixed: 'right', toolbar: '#barDemo', width: 65, minWidth: 65}
+						]
+					],
+					done: function(e){
+						console.log(e)
+					}
+				});
+				
+			}
+			
+			table.on('tool(course_detail_table)', function(obj) {
+				
+				console.log(obj)
+				if(obj.event === 'read'){
+					var w = $(window).width()*0.9;
+					var h = ($(window).height() - 50);
+					var layer_index = layer.open({
+						type: 2,
+						title: '查看课程信息',
+						area: [w + 'px', h + 'px'],
+						shade: 0.3,
+						maxmin: true,
+						shadeClose: true,
+						offset: 'auto',
+						content: 'course_details.html?courseId=' + obj.data.courseId,
+					});
+				}
+				
+			});
+			
+			
+		});
+		
+	</script>
+</html>

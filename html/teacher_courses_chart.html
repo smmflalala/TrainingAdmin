@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css" />
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script src="../js/cos-js-sdk-v5.min.js"></script>
+		<script src="../js/echarts.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+	</head>
+	<body>
+		<div class="x-nav">
+			<span class="layui-breadcrumb">
+				<a href="">首页</a>
+				<a href="">老师信息管理</a>
+				<a href=""><cite>老师授课统计</cite></a>
+			</span>
+			<a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);"
+			 title="刷新">
+				<i class="layui-icon" style="line-height:30px">ဂ</i></a>
+		</div>
+		<div class="x-body">
+			<table id="records_table" lay-filter="records_table" lay-skin="line"></table>
+		</div>
+	</body>
+	
+		<script type="text/html" id="toolbarDemo">
+		<div class="layui-btn-container">
+			<!-- <button class="layui-btn layui-btn-danger layui-btn-sm" lay-event="delete">删除</button> -->
+			<!-- <button class="layui-btn layui-btn-sm" lay-event="check">查看</button> -->
+			<button class="layui-btn layui-btn-sm" lay-event="export_all">导出全部数据</button>
+		</div>
+	</script>
+	
+	<script type="text/html" id="barDemo">
+		<a class="layui-btn layui-btn-xs" lay-event="edit"><i class="layui-icon layui-icon-edit"></i>考勤日志</a>
+		</a>
+	</script>
+	
+	<script>
+		
+		layui.config({
+			base: '../layui_exts/',
+		}).extend({
+			excel: 'excel',
+			tableMerge: 'tableMerge'
+		});
+		layui.use(['table', 'laypage', 'tableMerge', 'excel', 'laydate'], function(){
+			var table = layui.table,
+				laypage = layui.laypage,
+				tableMerge = layui.tableMerge,
+				excel = layui.excel,
+				laydate = layui.laydate,
+				form = layui.form,
+				$ = layui.jquery;
+				
+			var teacherId = getPar('teacherId');
+			var teacherName = unescape(getPar('teacherName'));
+			console.log(teacherId)
+			console.log(teacherName)
+			
+			get_teacher_courses()
+			
+			//获取教师的全部课程
+			function get_teacher_courses(){
+				
+				var data = {teacherName: teacherName},
+				data = JSON.stringify(data)
+				
+				var get_teacher_courses_info = {
+					api: 'course/search/1/0',
+					type: "POST",
+					data: data
+				}
+				
+				function get_teacher_courses_func(e){
+					
+					if(e.success){
+						console.log(e.data)
+						init_table(e.data)
+					}else{
+						console.log(e);
+						layer.msg(e.msg, {icon: 2});
+					}
+					
+				}
+				
+				request_(get_teacher_courses_info,get_teacher_courses_func)
+				
+			}
+			
+			//初始化表格
+			function init_table(data){
+					table.render({
+						elem: '#records_table',
+						data: data,
+						page: false,
+						toolbar: true,
+						toolbar: '#toolbarDemo',
+						limit: Number.MAX_VALUE,//不限条数,默认10
+						cols: [
+							[
+								{title: 'ID', field: 'courseId', sort: true, width: 60, fixed: 'left'},
+								{title: '地点', field: 'placeName', sort: true, merge: true},
+								{title: '乐器种类', field: 'kindName', sort: true, merge: true},
+								{title: '课程类别', field: 'courseType', sort: true, merge: true, templet: function(e){
+									return e.courseType == 0 ? '正课': '练习课';
+								}},
+								{title: '授课老师', field: 'teacherName', merge: true},
+								{title: '上课时间', field: 'startTime', templet: function(e){
+									var start_time = e.startTime.split(' ')[1];
+									var end_time = e.endTime.split(' ')[1];
+									var value = week_to_str(e.week) + ' ' + start_time + ' - ' + end_time;
+									return value;
+								}},
+								{title: '收费', field: 'coursePay', sort: true},
+								{title: '操作', toolbar: '#barDemo', width: 106}
+							]
+						],
+						done: function(){
+							tableMerge.render(this)
+						}
+					});
+			}
+			
+			//监听行工具事件
+			table.on('tool(records_table)', function(obj) {
+				var course_data = obj.data;
+				console.log(obj)
+				var w = $(window).width()*0.9;
+				var h = ($(window).height() - 50);
+				if (obj.event === 'edit') {
+// 					var layer_index = layer.open({
+// 						type: 2,
+// 						area: [w + 'px', h + 'px'],
+// 						shade: 0.3,
+// 						maxmin: true,
+// 						offset: 'auto',
+// 						content: 'teacher_change_iframe.html',
+// 						btn: ['确认修改', '取消'],
+// 						yes: function(index, layero) {
+// 							
+// 					
+// 						},
+// 						btn2: function() {
+// 							layer.closeAll();
+// 						},
+// 						zIndex: layer.zIndex, //重点1
+// 						success: function(layero, index) {
+// 							
+// 						}
+// 					});
+						var title = teacherName + '的考勤日志'
+						var open_in_tab = $(window.parent.document).find('#open_in_tab');
+						open_in_tab.attr('onclick', "x_admin_add_to_tab('" + title + "','html/teacher_attend_log.html?teacherId=" + teacherId + "&courseId=" + course_data.courseId + "',true)")
+						open_in_tab.click();
+				}
+			});
+
+			
+			//week转字符串
+			function week_to_str(week){
+				var str = '';
+				
+				switch(week){
+					case 1:
+						str = '周一';
+						break;
+					case 2:
+						str = '周二';
+						break;
+					case 3:
+						str = '周三';
+						break;
+					case 4:
+						str = '周四';
+						break;
+					case 5:
+						str = '周五';
+						break;
+					case 6:
+						str = '周六';
+						break;
+					case 7:
+						str = '周日';
+						break;
+				}
+				
+				return str;
+				
+			}
+			
+			//表头工具栏监听事件
+			table.on('toolbar(records_table)', function(obj) {
+				
+					switch (obj.event) {
+						case 'export_all':
+							//导出监听
+							var data = {teacherName: teacherName},
+							data = JSON.stringify(data)
+							//发送请求获取全部数据
+							var export_info = {
+								api: 'course/search/1/0',
+								type: "POST",
+								data: data
+							}
+							
+							function export_func(e){
+								console.log(e);
+								//数据添加表头
+								e.data.unshift({
+									courseId: 'ID',
+									placeName: '地点',
+									kindName: '乐器种类',
+									courseType: '课程类别',
+									teacherName: '授课老师',
+									startTime: '上课时间',
+									endTime: '下课时间',
+									coursePay: '收费'
+								});
+								//数据格式
+								var export_data = excel.filterExportData(e.data, {
+									courseId: 'courseId',
+									placeName: 'placeName',
+									kindName: 'kindName',
+									courseType: function(value, line, data){
+										if(value == '课程类别'){return value}
+										return value == 0 ? '正课': '练习课';
+									},
+									teacherName: 'teacherName',
+									startTime: function(value, line, data){
+										if(value == '上课时间'){return value}
+										var start_time = line.startTime.split(' ')[1];
+										var end_time = line.endTime.split(' ')[1];
+										var value = week_to_str(line.week) + ' ' + start_time + ' - ' + end_time;
+										return value;
+									},
+									coursePay: 'coursePay'
+								});
+								//设置列宽
+								var colConf = excel.makeColConfig({
+									'F': 140
+								}, 80);
+								
+								//导出
+								excel.exportExcel({sheet1: export_data}, '教师授课表.xlsx', 'xlsx',{extend: {'!cols': colConf}});
+							
+								layer.msg("已下载" ,{icon: 1});
+							}
+							
+							request_(export_info, export_func);
+							break;
+// 						case 'LAYTABLE_COLS':
+// 							layer.msg('a');
+// 							break;
+// 						case 'LAYTABLE_EXPORT':
+// 							layer.msg('b');
+// 							break;
+// 						case 'LAYTABLE_PRINT':
+// 							layer.msg('c');
+// 							break;
+					};
+				
+			})
+
+			
+		})
+		
+	</script>
+	
+</html>

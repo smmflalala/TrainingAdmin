@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+    <head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css" />
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+    </head>
+    <body>
+    <div class="x-body">
+        <blockquote class="layui-elem-quote">欢迎管理员：
+            <span class="x-red">admin</span>！当前时间: <span id='time'></span>
+        </blockquote>
+    </body>
+	<script>
+		
+		layui.use(['table'], function() {
+			
+			var $ = layui.jquery;
+			
+			
+			
+			
+			var time = setInterval(getNow, 1000);
+			
+			function getNow(){
+				var now = getDate() + ' ' + getTime()
+				// console.log(now)
+				$('#time').text(now)
+				// return now
+			}
+			
+			function getDate() {
+				var now = new Date()
+				var year = now.getFullYear(); //得到年份
+				var month = now.getMonth();//得到月份
+				var date = now.getDate();//得到日期
+				month = month + 1;
+				if (month < 10) month = "0" + month
+				if (date < 10) date = "0" + date
+	
+				let date_ = year + '-' + month + '-' + date
+				return date_
+			}
+			
+			function getTime() {
+				var now = new Date()
+				var hour = now.getHours();//得到小时
+				var minu = now.getMinutes();//得到分钟
+				var sec = now.getSeconds();//得到秒
+	
+				if (hour < 10) hour = "0" + hour;
+				if (minu < 10) minu = "0" + minu;
+				if (sec < 10) sec = "0" + sec;
+	
+				let time = hour + ':' + minu + ':' + sec
+	
+				return time
+			}
+		})
+		
+	</script>
+</html>

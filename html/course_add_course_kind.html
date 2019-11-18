@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css" />
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+	</head>
+	<body>
+		
+		<div class="x-nav">
+			<span class="layui-breadcrumb">
+				<a href="">首页</a>
+				<a href="">课程信息管理</a>
+				<a href="">课程管理</a>
+				<a href=""><cite>新增课程种类</cite></a>
+			</span>
+			<a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);"
+			 title="刷新">
+				<i class="layui-icon" style="line-height:30px;">ဂ</i></a>
+		</div>
+		<div class="x-body" style="">
+			<div class="layui-inline">
+				<button id="add_kind_btn" class="layui-btn">
+					<i class="layui-icon layui-icon-add-circle"></i> 添加
+				</button>
+			</div>
+			
+			<table id="course_kind_table" class="layui-table" lay-data="" lay-filter="course_kind"></table>
+		</div>
+		
+	</body>
+	
+	<script type="text/html" id="barDemo">
+		<!--<a class="layui-btn layui-btn-xs" lay-event="edit"><i class="layui-icon layui-icon-edit"></i> 编辑</a> -->
+		<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">
+			<i class="layui-icon layui-icon-delete"></i> 删除
+		</a>
+	</script>
+	
+	<script>
+		
+		layui.use(['table', 'layer'], function() {
+			
+			var table = layui.table,
+				$ = layui.jquery,
+				layer = layui.layer;
+				
+			show_kind_table();
+				
+			//初始化表格
+			function show_kind_table(){
+				
+				var get_course_kind_info = {
+					api: "courseKind/1/0",
+					type: "GET",
+					data: []
+				}
+				
+				function get_course_kind_func(e){
+					
+					if(e.success){
+						
+						var kind_data = e.data
+						table.render({
+							elem: '#course_kind_table',
+							data: kind_data,
+							page: false,
+							// size: 'lg',
+							limit: Number.MAX_VALUE,//不限条数,默认10
+							cols: [
+								[
+									{title: 'ID', field: 'kindId', sort: true, width: 60, fixed: 'left'},
+									{title: '种类名', field: 'kindName'},
+									{title: '操作', toolbar: '#barDemo', width: 84}
+								]
+							],
+							done: function(){}
+						});
+						
+					}else{
+						console.log(e);
+						layer.msg(e.msg, {icon: 2});
+					}
+					
+				}
+				
+				request_(get_course_kind_info, get_course_kind_func);
+				
+			}
+			
+			//添加种类
+			$('#add_kind_btn').on('click', function(e){
+				
+				layer.open({
+					type: 1,
+					title: '添加课程种类',
+					offset: 'auto',
+					btn: ['确定', '取消'],
+					content: '<br /><br />' +
+							'<div class="layui-form-item">' +
+								'<label class="layui-form-label">种类名</label>' +
+								'<div class="layui-input-inline">' +
+									'<input type="text" id="kind_name_input" class="layui-input" placeholder="请输入种类名" autocomplete="off">' +
+								'</div>' +
+							'</div>',
+					yes: function(index){
+						var kind_name = $('#kind_name_input').val();
+						console.log(kind_name);
+						
+						var request_data = {kindName: kind_name};
+						request_data = JSON.stringify(request_data);
+						var add_course_kind_info = {
+							api: "courseKind/",
+							type: "POST",
+							data: request_data
+						}
+						
+						function add_course_kind_func(e){
+							
+							if(e.success){
+								layer.close(index);
+								layer.msg('添加成功', {icon: 1});
+								show_kind_table();
+							}else{
+								console.log(e)
+								layer.msg(e.msg, {icon: 2});
+							}
+							
+						}
+						//添加种类
+						request_(add_course_kind_info, add_course_kind_func);
+						
+					}
+				});
+				
+			});
+			
+			//删除事件监听
+			table.on('tool(course_kind)', function(obj) {
+				console.log(obj);
+				var kind_name = obj.data.kindName;
+				var kind_id = obj.data.kindId;
+				var event = obj.event;
+				switch(event){
+					case 'edit':
+						// console.log('编辑');
+						
+						break;
+					case 'del':
+						// console.log('删除');
+						
+						layer.confirm('是否删除种类：' + kind_name, {icon: 7, title:'提示'}, function(index){
+							
+							var delete_course_kind_info = {
+								api: "courseKind/" + kind_id + "/",
+								type: "DELETE",
+								data: []
+							}
+							
+							function delete_course_kind_func(e){
+								
+								if(e.success){
+									
+									layer.close(index);
+									layer.msg('操作成功', {icon: 1});
+									show_kind_table();
+									
+								}else{
+									console.log(e);
+									layer.msg(e.msg, {icon: 2});
+								}
+								
+							}
+							
+							request_(delete_course_kind_info, delete_course_kind_func);
+							
+						});
+						
+						break;
+				}
+			});
+			
+			
+		});
+		
+	</script>
+	
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css" />
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+	</head>
+	<body>
+		<div class="x-body" style="">
+			<fieldset class="layui-elem-field layui-field-title">
+				<legend>管理学生</legend>
+			</fieldset>
+			<div id="transfer"></div>
+		</div>
+	</body>
+	
+	<script>
+		layui.use(['table', 'layer', 'form', 'transfer'], function() {
+			
+			var table = layui.table,
+				form = layui.form,
+				$ = layui.jquery,
+				layer = layui.layer,
+				transfer = layui.transfer;
+				
+			var courseId = getPar('courseId');
+			console.log(courseId)
+			
+			//渲染
+			transfer.render({
+				elem: '#transfer', 
+				showSearch: true,
+				data: [],
+				value: [],
+				title: ['全部学生', '已选学生'],
+				id: 'transfer',
+				text: {
+					none: '无数据', //没有数据时的文案
+					searchNone: '无匹配数据' //搜索无匹配数据时的文案
+				},
+				onchange: function(data, index){
+					//console.log(data); //得到当前被穿梭的数据
+					//console.log(index); //如果数据来自左边，index 为 0，否则为 1
+					
+					if(index == 0){//index 为 0, 数据来自左边，调用添加学生的接口
+						
+						var stus_data = []
+						$.each(data, function(index, value){
+							var stu_data = {
+								courseId: courseId,
+								studentId: value.value
+							}
+							stus_data.push(stu_data)
+						})
+						// console.log(stus_data)
+						stus_data = JSON.stringify(stus_data)
+						
+						var course_add_students_info = {
+							api: "course/batch/add/students",
+							type: "POST",
+							data: stus_data
+						}
+						
+						function course_add_students_func(e){
+							if(e.success){
+								console.log(e)
+								layer.msg('操作成功', {icon: 1});
+							}else{
+								console.log(e)
+								layer.msg(e.msg, {icon: 2});
+							}
+						}
+						
+						request_(course_add_students_info, course_add_students_func);
+						
+					}
+					if(index == 1){//index 为 1, 数据来自左边，调用移除学生的接口
+						
+						var stus_data = []
+						$.each(data, function(index, value){
+// 							var stu_data = {
+// 								courseId: courseId,
+// 								studentId: value.value
+// 							}
+							stus_data.push(value.value)
+						})
+						console.log(stus_data)
+						stus_data = JSON.stringify(stus_data)
+						
+						var course_remove_students_info = {
+							api: "course/batch/remove/students/"+ courseId,
+							type: "DELETE",
+							data: stus_data
+						}
+						
+						function course_remove_students_func(e){
+							if(e.success){
+								console.log(e)
+								layer.msg('操作成功', {icon: 1});
+							}else{
+								console.log(e)
+								layer.msg(e.msg, {icon: 2});
+							}
+						}
+						
+						request_(course_remove_students_info, course_remove_students_func);
+						
+					}
+					
+				}
+			});
+			
+			
+			get_all_student_list()
+			get_this_course_students_list()
+			function get_all_student_list(){
+				
+				var get_all_student_info = {
+					api: 'student/1/0',
+					type: "GET",
+					data: []
+				}
+				
+				function get_all_student_func(e){
+					// console.log(e)
+					if(e.success){
+						
+						var all_students_data = e.data
+						var all_students_data2 =[]
+						$.each(all_students_data, function(index, value){
+							var student_info = {
+								value: value.studentId,
+								title: value.studentName,
+								disabled: "",
+								checked: ""
+							}
+							all_students_data2.push(student_info)
+							
+						})
+						// console.log(all_students_data2)
+						
+						transfer.reload('transfer', {
+							data: all_students_data2
+						});
+						
+					}else{
+						console.log(e)
+						layer.msg(e.msg, {icon: 2});
+					}
+					
+				}
+				
+				request_(get_all_student_info, get_all_student_func)
+				
+			}
+			
+			function get_this_course_students_list(){
+				var get_this_course_student_info = {
+					api: 'course/student/' + courseId + '/1/0',
+					type: "GET",
+					data: []
+				}
+				
+				function get_this_course_student_func(e){
+					// console.log(e)
+					if(e.success){
+						var this_course_students_data = e.data
+						var this_course_students_data2 =[]
+						$.each(this_course_students_data, function(index, value){
+							this_course_students_data2.push(value.studentId)
+							
+						})
+						console.log(this_course_students_data2)
+						
+						transfer.reload('transfer', {
+							value: this_course_students_data2
+						});
+						
+					}else{
+						console.log(e)
+						layer.msg(e.msg, {icon: 2});
+					}
+					
+				}
+				
+				request_(get_this_course_student_info, get_this_course_student_func)
+			}
+			
+		})
+	</script>
+	
+</html>

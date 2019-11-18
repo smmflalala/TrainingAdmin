@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css" />
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script src="../js/cos-js-sdk-v5.min.js"></script>
+		<script src="../js/echarts.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+	</head>
+	<body>
+		
+		<div class="x-body">
+			<form class="layui-form" action="">
+				<div class="layui-form-item">
+					<div class="layui-inline">
+						<label class="layui-form-label">日期范围</label>
+						<div class="layui-input-inline">
+							<input type="text" name="search_key" id="search_key" placeholder="" autocomplete="off" class="layui-input" style="width: 300px;">
+						</div>
+						<!-- <div class="layui-input-inline" style="width: 60px;">
+							<button class="layui-btn" lay-submit="" id="sreach" lay-filter="sreach" title='搜索'><i class="layui-icon layui-icon-search"></i></button>
+						</div>
+						<div class="layui-input-inline" style="width: 60px;">
+							<button class="layui-btn" lay-submit="" id="reset" lay-filter="reset" title='重置'><i class="layui-icon layui-icon-refresh"></i></button>
+						</div> -->
+					</div>
+				</div>
+			</form>
+			<table id="chart_table" class="layui-table">
+				
+				<tr>
+					<td>已上正课</td>
+					<td id="formalCourse">0</td>
+				</tr>
+				<tr>
+					<td>已上练习课</td>
+					<td id="practiceCourse">0</td>
+				</tr>
+				
+			</table>
+			<div id="date_str"></div>
+		</div>
+		<!-- 
+		2019.10.11修改tid固定，无法获取正确授课信息bug
+		修改人：smmf
+		 -->
+		<script>
+			
+			layui.use(['table', 'laydate'], function(){
+				var table = layui.table,
+					laydate = layui.laydate,
+					form = layui.form,
+					$ = layui.jquery;
+			
+				var teacherId = getPar('teacherId');
+				console.log(teacherId)
+				
+				//初始化日期范围
+				laydate.render({
+					elem: '#search_key',
+					range: true,
+					format: 'yyyy-MM-dd HH:mm:ss',
+					done: function(value, date, endDate){
+						// $('#date_str').text(value)
+						var time = value.split(' - ')
+						var startTime = time[0]
+						var endTime = time[1]
+						get_chart(teacherId, startTime, endTime)
+					}
+				});
+				
+				get_chart(teacherId)
+				
+				function get_chart(tid, startTime, endTime){
+					console.log(tid)
+					var tid = tid
+					var startTime = startTime || ''
+					var endTime = endTime || ''
+					var data = {
+						tid: tid
+					}
+					if(startTime != '' && endTime != ''){
+						data.startTime = startTime
+						data.endTime = endTime
+					}
+					
+					data = JSON.stringify(data)
+					console.log(data)
+					var get_chart_info = {
+						api: 'teacher/teacher/count',
+						type: "POST",
+						data: data
+					}
+					
+					function get_chart_func(e){
+						
+						console.log(e)
+						if(e.success){
+							$('#formalCourse').text(e.data.formalCourse)
+							$('#practiceCourse').text(e.data.practiceCourse)
+							
+						}else{
+							console.log(e);
+							layer.msg(e.msg, {icon: 2});
+						}
+						
+					}
+					
+					request_(get_chart_info, get_chart_func)
+					
+				}
+				
+			})
+			
+		</script>
+		
+	</body>
+</html>

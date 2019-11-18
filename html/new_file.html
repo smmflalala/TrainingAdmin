@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css">
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script type="text/javascript" src="../js/cos-js-sdk-v5.min.js"></script>
+		<script type="text/javascript" src="../js/md5.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+	</head>
+	<body>
+		<div class="x-nav">
+			<span class="layui-breadcrumb">
+				<a href="">首页</a>
+				<a href="">学员信息管理</a>
+				<a href=""><cite>更改学员信息</cite></a>
+			</span>
+			<a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);"
+			 title="刷新">
+				<i class="layui-icon" style="line-height:30px">ဂ</i></a>
+		</div>
+		<div class="x-body">
+			<table id="stu_table" lay-filter="test"></table>
+			<div id="test1"></div>
+		</div>
+
+
+		<script>
+			layui.use(['table', 'laypage'], function() {
+				var table = layui.table,
+					$ = layui.jquery,
+					laypage = layui.laypage;
+
+				var data = {
+					username: 'admin',
+					password: 'qwe123'
+				}
+				var stu_info = {
+					api: "officer/login",
+					type: "POST",
+					data: JSON.stringify(data)
+				}
+				function stu_info_func(e) {
+					
+					if(e.success) {
+						console.log(e)
+					}else {
+						
+					}
+					
+				}
+				
+				request_(stu_info, stu_info_func);
+
+			});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css" />
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+		<style>
+			.layui-form-label{
+				text-align: left;
+				width: 120px;
+			}
+			.layui-word-aux{
+				color: #000000 !important;
+				
+			}
+		</style>
+	</head>
+	<body style="background: #eeeeee;">
+		
+		<div class="x-body" style="">
+			<form class="layui-form" id="stu_form">
+				<div class="layui-form">
+					<div class="layui-form-item">
+						<div class="layui-inline">
+							<label class="layui-form-label">温度：</label>
+							<div class="layui-input-inline">
+								<div class="layui-form-mid layui-word-aux">30</div>
+							</div>
+						</div>
+						<div class="layui-inline">
+							<label class="layui-form-label">光敏：</label>
+							<div class="layui-input-inline">
+								<div class="layui-form-mid layui-word-aux">8191</div>
+							</div>
+						</div>
+						<div class="layui-inline">
+							<label class="layui-form-label">服务器地址：</label>
+							<div class="layui-input-inline">
+								<input type="text" name="teacher" placeholder="" autocomplete="off" class="layui-input">
+							</div>
+						</div>
+						<div class="layui-inline">
+							<label class="layui-form-label">Id：</label>
+							<div class="layui-input-inline">
+								<input type="text" name="teacher" placeholder="" autocomplete="off" class="layui-input">
+							</div>
+						</div>
+						<div class="layui-inline">
+							<label class="layui-form-label">主题：</label>
+							<div class="layui-input-inline">
+								<input type="text" name="teacher" placeholder="" autocomplete="off" class="layui-input">
+							</div>
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<!-- <div class="layui-inline">
+							<button class="layui-btn layuiadmin-btn-list" lay-submit="" lay-filter="search_course_btn">
+								冲冲冲
+							</button>
+						</div> -->
+						<div class="layui-inline">
+							<input class="layui-input" style="width: 183px;" />
+						</div>
+						<div class="layui-inline">
+							<button class="layui-btn layuiadmin-btn-list" lay-submit="" lay-filter="search_course_btn">
+								开灯
+							</button>
+						</div>
+						<div class="layui-inline">
+							<button class="layui-btn layuiadmin-btn-list" lay-submit="" lay-filter="search_course_btn">
+								关灯
+							</button>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css" />
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+	</head>
+	<body>
+		<!-- <div class="x-nav">
+			<span class="layui-breadcrumb">
+				<a href="">首页</a>
+				<a href="">余额信息管理</a>
+				<a href=""><cite>学员余额修改</cite></a>
+			</span>
+			<a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);"
+			 title="刷新">
+				<i class="layui-icon" style="line-height:30px">ဂ</i></a>
+		</div> -->
+		<div class="x-body">
+			<form class="layui-form" action="">
+				<fieldset class="layui-elem-field layui-field-title">
+					<legend>余额扣除</legend>
+				</fieldset>
+				<div class="layui-form-item">
+					<label class="layui-form-label">扣除数目</label>
+					<div class="layui-input-inline">
+						<input type="number" name="recharge_blance_input" required lay-verify="required" placeholder="请输入扣除数目" autocomplete="off" class="layui-input">
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">备注信息</label>
+					<div class="layui-input-inline">
+						<input type="text" name="recharge_blance_remark_input" lay-verify="" placeholder="请输入备注信息" autocomplete="off"
+						 class="layui-input">
+					</div>
+					<div class="layui-form-mid layui-word-aux"></div>
+				</div>
+				<div class="layui-form-item">
+					<div class="layui-input-block">
+						<button class="layui-btn" lay-submit="" lay-filter="recharge_blance">立即提交</button>
+						<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+					</div>
+				</div>
+			</form>
+			<form class="layui-form" action="">
+				<fieldset class="layui-elem-field layui-field-title">
+					<legend>赠款扣除</legend>
+				</fieldset>
+				<div class="layui-form-item">
+					<label class="layui-form-label">扣除数目</label>
+					<div class="layui-input-inline">
+						<input type="number" name="give_blance_input" required lay-verify="required" placeholder="请输入扣除数目" autocomplete="off" class="layui-input">
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">备注信息</label>
+					<div class="layui-input-inline">
+						<input type="text" name="give_blance_remark_input" lay-verify="" placeholder="请输入备注信息" autocomplete="off"
+						 class="layui-input">
+					</div>
+					<div class="layui-form-mid layui-word-aux"></div>
+				</div>
+				<div class="layui-form-item">
+					<div class="layui-input-block">
+						<button class="layui-btn" lay-submit="" lay-filter="give_blance">立即提交</button>
+						<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</body>
+	
+	<script>
+		layui.use(['form', 'upload'], function() {
+			var $ = layui.jquery,
+				form = layui.form,
+				upload = layui.upload,
+				layer = layui.layer;
+				
+			var studentId = getPar('studentId');
+			console.log(studentId)
+				
+			//监听提交
+			form.on('submit(recharge_blance)', function(data) {
+				
+				console.log(data.field)
+				
+				var recharge_blance = data.field.recharge_blance_input
+				var recharge_blance_remark = data.field.recharge_blance_remark_input
+				
+				if(recharge_blance == ''){
+					layer.msg('请填写完整信息', {icon: 2});
+					return ;
+				}
+				
+				recharge_blance_remark = recharge_blance_remark == '' ? '无' : recharge_blance_remark
+				
+				var data = {
+					money: recharge_blance,
+					remark: recharge_blance_remark,
+					sid: studentId
+				}
+				
+				data = JSON.stringify(data)
+				
+				var give_blance_info = {
+					api: "student/sub/balance",
+					type: "PUT",
+					data: data
+				}
+				
+				function give_blance_func(e){
+					
+					if(e.success){
+						console.log(e);
+						layer.msg("扣除成功", {icon: 1});
+						
+					}else{
+						console.log(e)
+						layer.msg(e.msg, {icon: 2});
+					}
+					
+				}
+				
+				request_(give_blance_info, give_blance_func)
+				
+				return false;
+				
+			})
+			
+			//监听提交
+			form.on('submit(give_blance)', function(data) {
+				
+				console.log(data.field)
+				
+				var give_blance = data.field.give_blance_input
+				var give_blance_remark = data.field.give_blance_remark_input
+				
+				if(give_blance == ''){
+					layer.msg('请填写完整信息', {icon: 2});
+					return ;
+				}
+				
+				give_blance_remark = give_blance_remark == '' ? '无' : give_blance_remark
+				
+				var data = {
+					money: give_blance,
+					remark: give_blance_remark,
+					sid: studentId
+				}
+				
+				data = JSON.stringify(data)
+				
+				var give_blance_info = {
+					api: "student/sub/give",
+					type: "PUT",
+					data: data
+				}
+				
+				function give_blance_func(e){
+					
+					if(e.success){
+						console.log(e);
+						layer.msg("扣除成功", {icon: 1});
+						
+					}else{
+						console.log(e)
+						layer.msg(e.msg, {icon: 2});
+					}
+					
+				}
+				
+				request_(give_blance_info, give_blance_func)
+				
+				return false;
+				
+			})
+		})
+	</script>
+	
+</html>

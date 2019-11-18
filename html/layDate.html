@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css" />
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+	</head>
+	<body>
+		<div class="" id="test-n4" lay-key=""></div>
+		<input type="hidden" id="start_time" value="" />
+		<input type="hidden" id="end_time" value="" />
+	</body>
+	
+	<script>
+		layui.config({
+			base: '../layui_exts/',
+		}).extend({
+			excel: 'excel',
+		});
+		
+		layui.use(['table', 'layer', 'laydate'], function() {
+			var table = layui.table,
+				$ = layui.jquery,
+				layer = layui.layer,
+				laydate = layui.laydate,
+				excel = layui.excel;
+				
+			laydate.render({
+				elem: '#test-n4',
+				type: 'time',
+				range: true,
+				position: 'static',
+				btns: ['confirm'],
+				ready: function(date){
+					console.log(date); //得到初始的日期时间对象：{year: 2017, month: 8, date: 18, hours: 0, minutes: 0, seconds: 0}
+				},
+				done: function(value, date, endDate){
+					var val = value.replace(/\s+/g,"");//去除字符串空格
+					var start_time = val.split('-')[0];
+					var end_time = val.split('-')[1];
+// 					console.log(start);
+// 					console.log(end);
+					$("#start_time").val(start_time);
+					$("#end_time").val(end_time);
+				}
+			});		
+			
+		});
+	</script>
+	
+</html>

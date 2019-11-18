@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css" />
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+		
+		<style>
+			.layui-table-cell{
+			   height:auto !important;
+			   overflow:visible;
+			  text-overflow:inherit;
+			 white-space:normal;
+			}
+		/* 	.layui-table-cell>div{
+				white-space: nowrap;
+			} */
+		</style>
+		
+	</head>
+	<body>
+		<div class="x-nav">
+			<span class="layui-breadcrumb">
+				<a href="">首页</a>
+				<a href="">课程信息管理</a>
+				<a href=""><cite>课程表管理</cite></a>
+			</span>
+			<a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);"
+			 title="刷新">
+				<i class="layui-icon" style="line-height:30px;">ဂ</i></a>
+		</div>
+		<div class="x-body" style="">
+			<table id="course_table" class="layui-table" lay-data="" lay-filter="week_event">
+				
+			</table>
+		</div>
+
+
+		<script>
+			layui.config({
+				base: '../layui_exts/',
+			}).extend({
+				excel: 'excel',
+			});
+
+			layui.use(['table', 'layer', 'laydate'], function() {
+				var table = layui.table,
+					$ = layui.jquery,
+					layer = layui.layer,
+					laydate = layui.laydate,
+					excel = layui.excel;
+
+				//获取时间段
+				get_time_code();
+
+				//获取时间段
+				function get_time_code(){
+					
+					var get_time_code_info = {
+						api: "timeCode/1/0",
+						type: "GET",
+						data: []
+					}
+					
+					function get_time_code_func(e){
+						
+						if(e.success){
+							console.log(e.data);
+							
+							var course_data = data_deal(e.data);
+							
+							
+							teble_reload(course_data);
+							
+							
+// 							var result = e.data
+// 							var course_data = [];
+// 							var str = '';
+// 							//数据处理
+// 							for(i in result){
+// 								str = '       <span class="layui-badge-rim remove_time_code_btn" data-code_id="' + result[i].id + '"><i class="layui-icon layui-icon-close" style="font-size: 2px;"></i></span>';
+// 								var time_section = result[i].startTime + '-' + result[i].endTime + str;
+// 								var section = [];
+// 								section.push(time_section);
+// 								// section.push('<div><div>123</div><div>456</div><div>789</div></div>');
+// 								course_data.push(section);
+// 							}
+// 							console.log(course_data);
+// 							//表格重载
+// 							teble_reload(course_data);
+							
+						}else{
+							layer.msg(e.msg, {icon: 2});
+							console.log(e);
+						}
+						
+					}
+					
+					request_(get_time_code_info, get_time_code_func);
+					
+				}
+
+				//表格重载
+				function teble_reload(coures_data) {
+					console.log(coures_data)
+					var th = '<div id="add_time_btn" style="width: 100%;height: 100%;text-align: center;" title="添加时间段"><i class="layui-icon layui-icon-add-1" style="font-size: 20px;font-weight: 100;"></i></div>';
+					// 表格初始化
+					table.render({
+						elem: '#course_table',
+						data: coures_data,
+						page: false,
+						size: 'lg',
+						// toolbar: true,
+						limit: Number.MAX_VALUE,//不限条数,默认10
+						cols: [
+							[
+								{title: '', event: 'del',minWidth: 145},
+								{title: '周一', event: 'week1', minWidth: 100},
+								{title: '周二', event: 'week2', minWidth: 100},
+								{title: '周三', event: 'week3', minWidth: 100},
+								{title: '周四', event: 'week4', minWidth: 100},
+								{title: '周五', event: 'week5', minWidth: 100},
+								{title: '周六', event: 'week6', minWidth: 100},
+								{title: '周日', event: 'week7', minWidth: 100}
+							]
+						],
+						done: function(){
+							// console.log("ASdasd"); 
+							show_deteil_info(coures_data.length)
+						}
+					});
+					
+					//加载详细表格内容
+					function show_deteil_info(len){
+						
+						for(var i=0; i<len; i++){
+							for(var j=1; j<8; j++){
+								var ele = 'table>tbody>tr[data-index="' + i + '"]>td[data-field="' + j + '"]>div>div'
+								// $(ele).append(i + ',' + j)
+								// $(ele).append($(ele)[0].dataset.time_code_id)
+								var time_id = $(ele)[0].dataset.time_code_id
+								
+								var str = get_course_detail(time_id)
+// 								console.log(str)
+								var data = {timeCode: time_id}
+								data = JSON.stringify(data)
+								
+								$.ajax({
+									url: BASE_URL + 'course/search/1/0',
+									type: 'POST',
+									dataType: "json",
+									jsonp: "callback",
+									async: false,
+									beforeSend: function(request_data) {
+										request_data.setRequestHeader("x-access-token", TOKEN);
+									},
+									crossDomain: true,
+									data: data,
+									contentType: "application/json;charset=utf-8",
+									success: function(e) {
+										var len2 = e.size
+										var str = ''
+										for(var k=0; k<len2; k++){
+											console.log(e.data)
+											var type = e.data[k].courseType == 0 ? '正课' : '练习课'
+											str += '<div>' + e.data[k].placeName + '-' + e.data[k].kindName + type + '</div>'
+											
+										}
+										
+										console.log(str)
+										$(ele).append(str)
+									},
+									error: function(e){
+										console.log(e);
+									}
+								});
+							
+							}
+							
+						}
+						
+					}
+					
+					//监听行工具事件
+					table.on('tool(week_event)', function(obj) {
+						var stu_data = obj.data;
+						console.log(obj)
+						if (obj.event === 'LAYTABLE_PRINT') {
+							console.log("asdasdas")
+							window.print()
+						}
+					})
+					
+					function get_course_detail(id){
+						var data = {timeCode: id}
+						data = JSON.stringify(data)
+						var get_course_detail_info = {
+							api: 'course/search/1/0',
+							type: "POST",
+							async_: 'true',
+							data: data
+						}
+						
+						function get_course_detail_func(e){
+							
+							if(e.success){
+								var len2 = e.size
+								var str = ''
+								for(var k=0; k<len2; k++){
+									console.log(e.data)
+									var type = e.data[k].courseType == 0 ? '正课' : '练习课'
+									str += e.data[k].placeName + '-' + e.data[k].kindName + type + '/n'
+									
+								}
+								
+								console.log(str)
+								return str
+							}
+							
+						}
+						
+						request_(get_course_detail_info, get_course_detail_func)
+						
+					}
+					
+
+					//添加时间段按钮段监听事件
+					var course_table = $("#course_table").next();
+					var add_time_btn = course_table.find('div[id="add_time_btn"]');
+					add_time_btn.on('click', function(e){
+						console.log("as");
+						//弹出时间选择框
+						var time_choose_index = layer.open({
+							title: 'asdasd',
+							type: 2,
+							content: ['layDate.html', 'no'],
+							area: ['544px', '367px'],
+							offset: 'auto',
+							success: function(index, layero){
+								// console.log('成功打开');
+								// $('.layui-layer-btn0').css({'border-color': '#009688', 'background-color': '#009688'});
+							},
+							btn: ['确认', '取消'],
+							btnAlign: 'c',
+							yes: function(index, layero){
+								// console.log('确认');
+								var body = layer.getChildFrame('body', index);
+								body.find('span[class="laydate-btns-confirm"]').click();
+								var startTime = body.find('#start_time').val().toString();
+								var endTime = body.find('#end_time').val().toString();
+	// 							startTime = "\""+startTime+"\"";
+	// 							endTime = "\""+endTime+"\"";
+								console.log(startTime);
+								console.log(startTime);
+								
+								var data = {
+										startTime: startTime,
+										endTime: endTime,
+										week: 6
+									}
+								console.log(data);
+								data = JSON.stringify(data);
+								console.log(data);
+								var creat_time_code_info = {
+									api: "timeCode/",
+									type: "POST",
+									data: data
+								}
+								
+								function create_time_code_func(e) {
+									if (e.success){
+										
+										get_time_code();
+										
+										layer.msg("操作成功", {icon: 1});
+										
+										layer.close(time_choose_index);
+									}else {
+										layer.msg(e.msg, {icon: 2});
+										console.log(e);
+									}
+								}
+								
+								request_(creat_time_code_info, create_time_code_func);
+								
+							},
+							btn2: function(index, layero){
+								// console.log('取消');
+							}
+						});
+						
+					});
+
+					//删除时间段按钮段监听事件
+					$(".layui-badge-rim").click(function(e){
+						// console.log(e.currentTarget.dataset.code_id)
+						var time_code = $(this).parent().text();
+						var time_code_id = e.currentTarget.dataset.code_id;
+						layer.confirm('是否删除' + time_code + '时间段，该时间段的课程会一起删除，请谨慎操作', function(index){
+							
+							var delete_time_code_info = {
+								api: "timeCode/" + time_code_id,
+								type: "DELETE",
+								data: []
+							}
+							
+							function delete_time_code_func(e){
+								
+								if(e.success){
+									
+									get_time_code();
+									
+									layer.msg("删除成功", {icon: 1});
+									
+									layer.close(index);
+								}else{
+									layer.msg(e.msg, {icon: 0});
+									console.log(e);
+								}
+								
+							}
+							
+							request_(delete_time_code_info, delete_time_code_func);
+							
+						});
+						
+					})
+
+					//单元格点击监听
+					$(".layui-table-col-special").on('click', function(e){
+						var _this = $(this).find("div[data-time_code_id]");
+						//若点击时间段单元格,则return，无事件发生
+// 						if(_this.length == 0){
+// 							return ;
+// 						}
+// 						var time_code_id = _this[0].dataset.time_code_id;
+// 						if(time_code_id){
+// 							course_info_details(time_code_id, '详细课表');
+// 						}
+						
+					});
+
+				};
+				
+				//单元格点击监听事件
+				table.on('tool(week_event1)', function(obj){
+					var data = obj;
+					// console.log();
+					var time_code_id = obj.tr[0].firstElementChild.lastElementChild.lastElementChild.dataset.code_id;
+					var week = -1;
+					var title = '';
+					var week_index = parseInt(obj.tr[0].dataset.index) + 1
+					switch(obj.event){
+						case 'del':
+							
+							break;
+						case 'week1':
+							console.log('周一第' + week_index + '节');
+							title = '周一第' + week_index + '节';
+							week = 1;
+							course_info_details(week, time_code_id, title);
+							break;
+						case 'week2':
+							console.log('周二第' + week_index + '节');
+							title = '周二第' + week_index + '节';
+							week = 2;
+							course_info_details(week, time_code_id, title);
+							break;
+						case 'week3':
+							console.log('周三第' + week_index + '节');
+							title = '周三第' + week_index + '节';
+							week = 3;
+							course_info_details(week, time_code_id, title);
+							break;
+						case 'week4':
+							console.log('周四第' + week_index + '节');
+							title = '周四第' + week_index + '节';
+							week = 4;
+							course_info_details(week, time_code_id, title);
+							break;
+						case 'week5':
+							console.log('周五第' + week_index + '节');
+							title = '周五第' + week_index + '节';
+							week = 5;
+							course_info_details(week, time_code_id, title);
+							break;
+						case 'week6':
+							console.log('周六第' + week_index + '节');
+							title = '周六第' + week_index + '节';
+							week = 6;
+							course_info_details(week, time_code_id, title);
+							break;
+						case 'week7':
+							console.log('周日第' + week_index + '节');
+							title = '周日第' + week_index + '节';
+							week = 7;
+							course_info_details(week, time_code_id, title);
+							break;
+					}
+					
+					console.log(obj)
+					
+				});
+	
+				
+	
+				//弹窗查看具体时间的课程信息
+				function course_info_details(time_code_id, title){
+// 					var w = $(window).width()*0.9;
+// 					var h = ($(window).height() - 50);
+// 					var layer_index = layer.open({
+// 						type: 2,
+// 						title: '查看课程信息',
+// 						area: [w + 'px', h + 'px'],
+// 						shade: 0.3,
+// 						maxmin: true,
+// 						shadeClose: true,
+// 						offset: 'auto',
+// 						content: 'course_table_details.html?timeCode=' + time_code_id + '&week=' + week,
+// 					});
+					var open_in_tab = $(window.parent.document).find('#open_in_tab');
+					open_in_tab.attr('onclick', "x_admin_add_to_tab('" + title + "','html/course_table_details.html?timeCode=" + time_code_id + "',true)")
+					open_in_tab.click();
+				}
+
+				//返回数据格式转换表格所需数据格式
+				function data_deal(data){
+					
+					var result = data;
+					
+					var map = {};
+					var deal_data = [];
+					
+					for(var i=0; i<result.length; i++){
+						result_i = result[i];
+						if(!map[result_i.startTime] && !map[result_i.endTime]){
+							deal_data.push({
+								id: result_i.id,
+								startTime: result_i.startTime,
+								endTime: result_i.endTime,
+								data: [result_i]
+							})
+							map[result_i.startTime] = result_i;
+							// deal_data.push(result_i);
+						}else{
+							for(var j=0; j<deal_data.length; j++){
+								var course_j = deal_data[j];
+								if(course_j.startTime == result_i.startTime && course_j.endTime == result_i.endTime){
+									course_j.data.push(result_i);
+									break;
+								}
+							}
+						}
+					}
+					
+					// console.log(deal_data);
+					
+					var course_data = [];
+					
+					for(i in deal_data){
+						var section = [];
+						var time_code_section = deal_data[i].startTime + '-' + deal_data[i].endTime;
+						
+						section.push(time_code_section);
+						for(j in deal_data[i].data){
+							// console.log(deal_data[i].data[j].id);
+							var talbe_section = '<div style="width:100%;height:100;" data-time_code_id="' + deal_data[i].data[j].id + '" ></div>'
+							section.push(talbe_section);
+						}
+						course_data.push(section);
+					}
+					// console.log(course_data);
+					
+					return course_data;
+				}
+
+			});
+			
+		</script>
+	</body>
+</html>

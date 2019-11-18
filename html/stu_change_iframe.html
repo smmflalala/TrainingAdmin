@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css">
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script type="text/javascript" src="../js/cos-js-sdk-v5.min.js"></script>
+		<script type="text/javascript" src="../js/md5.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+	</head>
+	<body>
+		<div class="x-body">
+			<form class="layui-form" action="">
+				<fieldset class="layui-elem-field layui-field-title">
+					<legend>学员信息</legend>
+				</fieldset>
+				<div class="layui-form-item">
+					<label class="layui-form-label">学员姓名</label>
+					<div class="layui-input-inline">
+						<input type="text" name="studentName" required lay-verify="required" placeholder="请输入学员姓名" autocomplete="off" class="layui-input">
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">联系方式</label>
+					<div class="layui-input-inline">
+						<input type="phone" name="phone" required lay-verify="required|phone|number" placeholder="请输入学员联系方式" autocomplete="off"
+						 class="layui-input">
+					</div>
+					<div class="layui-form-mid layui-word-aux"></div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">已考取等级</label>
+					<div class="layui-input-inline">
+						<input type="text" name="existLevel" required lay-verify="required" placeholder="请输入学员已考取等级" autocomplete="off"
+						 class="layui-input">
+					</div>
+					<div class="layui-form-mid layui-word-aux"></div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">身份证号</label>
+					<div class="layui-input-inline">
+						<input type="text" name="idCard" required lay-verify="required|id_card" placeholder="请输入学员的身份证号" autocomplete="off"
+						 class="layui-input">
+					</div>
+					<div class="layui-form-mid layui-word-aux"></div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">学员分类</label>
+					<div class="layui-input-inline">
+						<select name="studentState" lay-verify="">
+							<option value="1">正式学员</option>
+							<option value="0">试课学员</option>
+						</select>
+					</div>
+					<div class="layui-form-mid layui-word-aux"></div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">性别</label>
+					<div class="layui-input-block">
+						<input type="radio" name="sex" value="0" title="男">
+						<input type="radio" name="sex" value="1" title="女">
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">照片</label>
+					<div class="layui-input-inline">
+						<div class="layui-upload">
+							<!-- <button type="button" required class="layui-btn" id="favicon">上传图片</button> -->
+							<label class="layui-btn" for="favicon">
+								<input type="file" id="favicon" value="" name="" style="left:-9999px;position:absolute;">
+								<input type="hidden" id="favicon_1" required lay-verify="favicon_1" name="favicon_1" value="" />
+								<span>上传图片</span>
+							</label>
+							<div class="layui-upload-list">
+								<img class="layui-upload-img" id="demo1" style="width: 100px;height:auto;">
+								<p id="demoText"></p>
+							</div>
+						</div>
+					</div>
+				</div>
+				<fieldset class="layui-elem-field layui-field-title">
+					<legend>家长信息信息</legend>
+				</fieldset>
+				<div class="layui-form-item">
+					<label class="layui-form-label">家长姓名</label>
+					<div class="layui-input-inline">
+						<input type="text" name="parentName" required lay-verify="required" placeholder="请输入家长姓名" autocomplete="off" class="layui-input">
+					</div>
+					<div class="layui-form-mid layui-word-aux"></div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">联系方式</label>
+					<div class="layui-input-inline">
+						<input type="phone" name="parentPhone" required lay-verify="required|phone|number" placeholder="请输入家长联系方式" autocomplete="off"
+						 class="layui-input">
+					</div>
+					<div class="layui-form-mid layui-word-aux"></div>
+				</div>
+				<!-- <div class="layui-form-item">
+					<div class="layui-input-block">
+						<button class="layui-btn" id="add" lay-submit="" lay-filter="formDemo">立即提交</button>
+						<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+					</div>
+				</div> -->
+			</form>
+		</div>
+		
+		<script>
+			layui.use(['form', 'upload'], function() {
+				var $ = layui.jquery,
+					form = layui.form
+		
+			});
+		</script>
+		
+		<!-- cos上传操作 -->
+		<script>
+			var Bucket = BUCKET;
+			var Region = REGION;
+			
+			// 初始化实例
+			var cos = new COS({
+				getAuthorization: function (options, callback) {
+					var url = BASE_URL + 'officer/cos';
+					var xhr = new XMLHttpRequest();
+					xhr.open('GET', url, true);
+					xhr.setRequestHeader("x-access-token", TOKEN);
+					xhr.onload = function (e) {
+						// console.log(e)
+						try {
+							var data = JSON.parse(e.target.responseText);
+							// console.log(data);
+							data = JSON.parse(data.data);
+							// console.log(data);
+						} catch (e) {
+						}
+						callback({
+							TmpSecretId: data.credentials && data.credentials.tmpSecretId,
+							TmpSecretKey: data.credentials && data.credentials.tmpSecretKey,
+							XCosSecurityToken: data.credentials && data.credentials.sessionToken,
+							ExpiredTime: data.expiredTime,
+						});
+					};
+					xhr.send();
+				}
+			});
+			
+			// 监听选文件
+			document.getElementById('favicon').onchange = function () {
+				
+				$('#demoText').html('');
+				var indexs=layer.msg('正在提交', {icon: 16, shade: 0.3, time:0});
+				$('#demoText').html('<span style="">上传中。。。</span>');
+				
+				var file = this.files[0];
+				if (!file) return;
+					
+				console.log(file);
+				
+				var reader = new FileReader();
+				reader.readAsDataURL(file);                    
+				reader.onload = function(e) {
+					// 图片base64化
+					var newUrl = this.result;
+					$('#demo1').attr('src', newUrl);
+				};
+			
+				//taskId用来重新上传
+				var taskId = "";
+				//日期对象,加到名字上再进项md5加密，防止同名覆盖
+				var myDate = new Date();
+				console.log(myDate);
+				var file_name = $.md5(file.name + myDate);
+				console.log(file_name);
+				//分片上传文件
+				cos.sliceUploadFile({
+					Bucket: Bucket,
+					Region: Region,
+					Key: "student_favicon/" + file.name,
+					Body: file,
+					onHashProgress: function (progressData) {
+						console.log('校验中', JSON.stringify(progressData));
+					},
+					onProgress: function (progressData) {
+						console.log('上传中', JSON.stringify(progressData));
+					},
+					TaskReady: function (e) {
+						console.log(e);
+						taskId = e
+					}
+				}, function (err, data) {
+					console.log(err, data);
+					var demoText = $('#demoText');
+					if(err){
+						console.log(err);
+						demoText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-xs demo-reload">重试</a>');
+						demoText.find('.demo-reload').on('click', function() {
+							console.log(taskId);
+							cos.restartTask(taskId);
+						});
+					}else{
+						demoText.html('<span style="">上传成功</span>');
+						$("#favicon_1").val('http://' + data.Location);
+						layer.close(indexs);
+					}
+				});
+			
+			};
+		</script>
+		
+	</body>
+</html>

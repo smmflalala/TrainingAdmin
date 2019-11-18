@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+		<link rel="stylesheet" href="../css/xadmin.css" />
+		<script type="text/javascript" src="../js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="../lib/layui/layui.js" charset="utf-8"></script>
+		<script type="text/javascript" src="../js/xadmin.js"></script>
+		<script type="text/javascript" src="../js/cookie.js"></script>
+		<script type="text/javascript" src="../js/request.js"></script>
+		<script src="../js/cos-js-sdk-v5.min.js"></script>
+		<script>
+			if(TOKEN == ''){
+				location.href='../login.html'
+			}
+		</script>
+	</head>
+	<body>
+		
+		<div class="x-nav">
+			<span class="layui-breadcrumb">
+				<a href="">首页</a>
+				<a href="">课程信息管理</a>
+				<a href=""><cite>上课地点管理</cite></a>
+			</span>
+			<a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);"
+			 title="刷新">
+				<i class="layui-icon" style="line-height:30px">ဂ</i></a>
+		</div>
+		<div class="x-body">
+			<div class="layui-inline">
+				<button id="add_place_btn" class="layui-btn">
+					<i class="layui-icon layui-icon-add-circle"></i> 添加
+				</button>
+			</div>
+			
+			<table id="course_place_table" class="layui-table" lay-data="" lay-filter="course_place"></table>
+		</div>
+		
+	</body>
+	
+	<script type="text/html" id="barDemo">
+		<a class="layui-btn layui-btn-xs" lay-event="edit"><i class="layui-icon layui-icon-edit"></i> 编辑</a>
+		<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">
+			<i class="layui-icon layui-icon-delete"></i> 删除
+		</a>
+	</script>
+	
+	<script>
+		
+		layui.use(['table', 'layer'], function() {
+			
+			var table = layui.table,
+				$ = layui.jquery,
+				layer = layui.layer;
+				
+			get_place()
+			
+			//初始获取数据
+			function get_place(){
+				
+				var get_place_info = {
+					api: 'place/1/0',
+					type: "GET",
+					data: []
+				}
+				
+				function get_place_func(e){
+					
+					if(e.success){
+						init_table(e.data)
+					}else{
+						console.log(e);
+						layer.msg(e.msg, {icon: 2});
+					}
+					
+				}
+				
+				request_(get_place_info, get_place_func)
+				
+			}
+			
+			
+			function init_table(data){
+				
+				table.render({
+					elem: '#course_place_table',
+					data: data,
+					page: false,
+					// size: 'lg',
+					limit: Number.MAX_VALUE,//不限条数,默认10
+					cols: [
+						[
+							{title: 'ID', field: 'placeId', sort: true, width: 60, fixed: 'left'},
+							{title: '地点', field: 'placeName'},
+							{title: '详细地址', field: 'placeAddress'},
+							{title: '操作', toolbar: '#barDemo', width: 150}
+						]
+					],
+					done: function(){}
+				});
+				
+			}
+			
+			
+			//表格事件监听
+			table.on('tool(course_place)', function(obj) {
+				console.log(obj);
+				var place_data = obj.data
+				var event = obj.event;
+				switch(event){
+					case 'edit':
+						// console.log('编辑');
+						
+						layer.open({
+							type: 1,
+							title: '修改地点',
+							offset: 'auto',
+							btn: ['确定', '取消'],
+							content: '<br /><br />' +
+									'<div class="layui-form-item">' +
+										'<label class="layui-form-label">地点</label>' +
+										'<div class="layui-input-inline">' +
+											'<input type="text" id="place" value="' + place_data.placeName + '" class="layui-input" placeholder="请输入地点名" autocomplete="off">' +
+											'</div>' +
+									'</div>' + 
+									'<div class="layui-form-item">' +
+										'<label class="layui-form-label">地址</label>' +
+										'<div class="layui-input-inline">' +
+											'<input type="text" id="address" value="' + place_data.placeAddress + '" class="layui-input" placeholder="请输入详细地址" autocomplete="off">' +
+										'</div>' +
+									'</div>',
+							yes: function(index){
+								var place = $('#place').val();
+								// console.log(recharge_blance);
+								
+								var address = $('#address').val();
+								// console.log(recharge_blance_remark);
+								
+								if(place == '' || address == ''){
+									layer.msg('请填写完整信息', {icon: 2});
+									return ;
+								}
+								
+								var data = {
+									placeId: place_data.placeId,
+									placeName: place,
+									placeAddress: address
+								}
+								
+								data = JSON.stringify(data)
+								console.log(data)
+								var recharge_place_info = {
+									api: "place/",
+									type: "PUT",
+									data: data
+								}
+								
+								function recharge_place_func(e){
+									
+									if(e.success){
+										console.log(e)
+										layer.msg("修改成功", {icon: 1});
+										layer.close(index);
+										get_place()
+									}else{
+										console.log(e)
+										layer.msg(e.msg, {icon: 2});
+									}
+									
+								}
+								
+								request_(recharge_place_info, recharge_place_func);
+								
+							}
+						});
+						
+						
+						break;
+					case 'del':
+						// console.log('删除');
+						
+						layer.confirm('是否删除该地点', {icon: 7, title:'提示'}, function(index){
+							
+							var delete_place_info = {
+								api: "place/" + place_data.placeId,
+								type: "DELETE",
+								data: []
+							}
+							
+							function delete_place_func(e){
+								
+								if(e.success){
+									
+									layer.close(index);
+									layer.msg('操作成功', {icon: 1});
+									get_place()
+									
+								}else{
+									console.log(e);
+									layer.msg(e.msg, {icon: 2});
+								}
+								
+							}
+							
+							request_(delete_place_info, delete_place_func);
+							
+						});
+						
+						break;
+				}
+			});
+			
+			//添加地点
+			$('#add_place_btn').click(function(e){
+				
+				layer.open({
+					type: 1,
+					title: '新增地点',
+					offset: 'auto',
+					btn: ['确定', '取消'],
+					content: '<br /><br />' +
+							'<div class="layui-form-item">' +
+								'<label class="layui-form-label">地点</label>' +
+								'<div class="layui-input-inline">' +
+									'<input type="text" id="place" class="layui-input" placeholder="请输入地点名" autocomplete="off">' +
+									'</div>' +
+							'</div>' + 
+							'<div class="layui-form-item">' +
+								'<label class="layui-form-label">地址</label>' +
+								'<div class="layui-input-inline">' +
+									'<input type="text" id="address" class="layui-input" placeholder="请输入详细地址" autocomplete="off">' +
+								'</div>' +
+							'</div>',
+					yes: function(index){
+						var place = $('#place').val();
+						// console.log(recharge_blance);
+						
+						var address = $('#address').val();
+						// console.log(recharge_blance_remark);
+						
+						if(place == '' || address == ''){
+							layer.msg('请填写完整信息', {icon: 2});
+							return ;
+						}
+						
+						var data = {
+							placeName: place,
+							placeAddress: address
+						}
+						
+						data = JSON.stringify(data)
+						console.log(data)
+						var add_place_info = {
+							api: "place/",
+							type: "POST",
+							data: data
+						}
+						
+						function add_place_func(e){
+							
+							if(e.success){
+								console.log(e)
+								layer.msg("添加成功", {icon: 1});
+								layer.close(index);
+								get_place()
+							}else{
+								console.log(e)
+								layer.msg(e.msg, {icon: 2});
+							}
+							
+						}
+						
+						request_(add_place_info, add_place_func);
+						
+					}
+				});
+				
+			})
+			
+		})
+		
+	</script>
+	
+</html>
