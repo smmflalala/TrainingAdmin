@@ -36,7 +36,7 @@
 			<span class="layui-breadcrumb">
 				<a href="">首页</a>
 				<a href="">课程信息管理</a>
-				<a href=""><cite>课程表管理</cite></a>
+				<a href=""><cite>详细课程表</cite></a>
 			</span>
 			<a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);"
 			 title="刷新">
@@ -62,6 +62,9 @@
 					layer = layui.layer,
 					laydate = layui.laydate,
 					excel = layui.excel;
+
+
+				var indexs=layer.msg('正在加载', {icon: 16, shade: 0.3, time:0});
 
 				//获取时间段
 				get_time_code();
@@ -140,6 +143,7 @@
 						done: function(){
 							// console.log("ASdasd"); 
 							show_deteil_info(coures_data.length)
+							layer.close(indexs);
 						}
 					});
 					

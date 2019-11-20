@@ -59,8 +59,8 @@
 
 
 		<script type="text/html" id="barDemo">
-			<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="edit">编辑</a>
-			<!-- <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a> -->
+			<a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+			<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
 		</script>
 
 		<script>
@@ -179,7 +179,7 @@
 									fixed: 'right',
 									title: '操作',
 									toolbar: '#barDemo',
-									minWidth: 80,
+									minWidth: 120,
 								}
 							]
 						],
@@ -348,6 +348,51 @@
 							}
 						});
 						// var index = layer.load(2);
+					}else if (obj.event === 'del'){
+						layer.confirm('是否删除学生' + stu_data.studentName + "?", function(confirm_index){
+							
+							var delete_student_data = {
+								api: "student/sid/" + stu_data.studentId,
+								type: "DELETE",
+								data: []
+							}
+							
+							function delete_student_func(e){
+								if(!e.success){
+									layer.msg(e.msg, {icon: 2});
+									console.log(e);
+									return ;
+								}
+								if(is_search){
+									//如果是搜索状态,则刷新固定数据
+									var student_data_fiexd = [
+										{
+											teacherId: stu_data.teacherId,
+											teacherName: stu_data.teacherName,
+											phone: stu_data.phone,
+											sex: stu_data.sex,
+											createTime: stu_data.createTime
+										}
+									];
+									
+									table_reload_fixed(stu_data);
+									
+								}else{
+									//如果不是搜索状态,则刷新当前页
+									console.log(laypage_curr + "," + laypage_limit)
+									table.reload('stu_table', {
+										url: BASE_URL + "student/" + laypage_curr + "/" + laypage_limit,
+									});
+								}
+							}
+							
+							request_(delete_student_data, delete_student_func);
+							
+							layer.msg("已删除", {icon: 1});
+							
+							layer.close(confirm_index);
+						}); 
+						
 					}
 				});
 				
@@ -440,7 +485,7 @@
 									fixed: 'right',
 									title: '操作',
 									toolbar: '#barDemo',
-									minWidth: 80,
+									minWidth: 120,
 								}
 							]
 						],
